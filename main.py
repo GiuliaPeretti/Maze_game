@@ -189,7 +189,7 @@ def vis_gen_maze(row,col, prev_row, prev_col):
         pygame.display.flip()
     return(None,None,None,None)
 
-def gen_maze(row,col, prev_row, prev_col):
+def gen_maze(row,col, prev_row, prev_col, cell_width):
     while (row is not None):
         print(row,col, prev_row, prev_col)
 
@@ -244,6 +244,13 @@ def gen_maze(row,col, prev_row, prev_col):
                 row=temp[0]
                 col=temp[1]
         pygame.display.flip()
+    
+    size=int(560/cell_width)
+    for i in range(size):
+        grid_walls[0][i][0]=0
+        grid_walls[i][0][3]=0
+        grid_walls[size-1][i][2]=0
+        grid_walls[i][size-1][1]=0
     return(None,None,None,None)
 
 def check_all_visited():
@@ -274,21 +281,33 @@ def select_watch():
 def move_player(dir):
     print(stack_player)
     player_cell=stack_player[-1]
-    if (len(stack_player)>0):
-        print("entra")
-        display_visited(player_cell[0],player_cell[1], BACKGROUND_COLOR)
-    
-    if dir==0:
+    valid=False
+    print(grid_walls[player_cell[0]][player_cell[1]])
+
+    print(grid_walls[player_cell[0]][player_cell[1]][0])
+    print(grid_walls[player_cell[0]][player_cell[1]][1])
+    print(grid_walls[player_cell[0]][player_cell[1]][2])
+    print(grid_walls[player_cell[0]][player_cell[1]][3])
+
+    print(dir)
+    if dir==0 and grid_walls[player_cell[0]][player_cell[1]][0]==1:
         player_cell=(player_cell[0]-1, player_cell[1])
-    elif dir==1:
+        valid=True
+    elif dir==1 and grid_walls[player_cell[0]][player_cell[1]][1]==1:
         player_cell=(player_cell[0], player_cell[1]+1)
-    elif dir==2:
+        valid=True
+    elif dir==2  and grid_walls[player_cell[0]][player_cell[1]][2]==1:
         player_cell=(player_cell[0]+1, player_cell[1])
-    elif dir==3:
-        player_cell=(player_cell[0], player_cell[1]-1)
-    display_visited(player_cell[0],player_cell[1],GREEN)
-    stack_player.append(player_cell)
-    print(stack_player[-2])
+        valid=True
+    elif dir==3 and grid_walls[player_cell[0]][player_cell[1]][3]==1:
+        player_cell=(player_cell[0], player_cell[1]-1) 
+        valid=True
+    if valid:
+        if (len(stack_player)>0):
+            print("entra")
+            display_visited(player_cell[0],player_cell[1], BACKGROUND_COLOR)
+        display_visited(player_cell[0],player_cell[1],GREEN)
+        stack_player.append(player_cell)
 
 
 
@@ -338,7 +357,8 @@ while run:
                             print("entra1")
                             gird_visited, grid_walls, cell_width=init_grids(selected, cell_width)
                             draw_grid(cell_width)
-                            gen_maze(0,0,None,None)
+                            print(cell_width)
+                            gen_maze(0,0,None,None,cell_width)
                             display_maze()
                             display_visited(0,0,GREEN)
                         else:
