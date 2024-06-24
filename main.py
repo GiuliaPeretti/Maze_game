@@ -65,12 +65,14 @@ def init_grids():
 
     return(gird_visited, grid_walls)
 
-def display_visited(row, col):
-    color_cell(row, col, GRAY)
+def display_visited(row, col, color):
+    color_cell(row, col, color)
     walls=grid_walls[row][col]
     for i in range (len(walls)):
         if(walls[i]==1):
             draw_wall(row,col,i)
+            
+
 
 def draw_wall(row,col,n):
     #0->up, 1->right, 2->down, 3->left
@@ -85,10 +87,33 @@ def draw_wall(row,col,n):
         case 3:
             pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
 
+def draw_walls(row, col, walls):
+    x,y,w,h=col*cell_width+20, row*cell_width+20, cell_width,cell_width
+    for i in range (len(walls)):
+        match walls[i]:
+            case 0:
+                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x+cell_width,y), 3)
+            case 1:
+                pygame.draw.line(screen, BACKGROUND_COLOR, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
+            case 2:
+                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
+            case 3:
+                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
+
+
+
+
+
 def gen_maze(row,col):
 
-    time.sleep(0.1)
-    display_visited(row,col)
+    time.sleep(0.2)
+    display_visited(row,col,(0,255,0))
+    if (len(stack)>0):
+        display_visited(stack[-1][0],stack[-1][1],BACKGROUND_COLOR)
+       
+
+   
+    gird_visited[row][col]=1
     valid_cell=[]
     if(row-1!=-1 and gird_visited[row-1][col]==0):
         valid_cell.append([row-1,col,0])
@@ -102,11 +127,11 @@ def gen_maze(row,col):
 
     
     if (len(valid_cell)>0):
+        print(valid_cell)
+        
         stack.append((row,col))
         n=random.choice(valid_cell)
         new_r,new_c,wall=n
-
-        gird_visited[row][col]=1
         grid_walls[row][col][wall]=1
 
         match wall:
@@ -119,18 +144,30 @@ def gen_maze(row,col):
             case 3:
                 grid_walls[new_r][new_c][1]=1
 
-        color_cell(row,col,BACKGROUND_COLOR)
-        color_cell(new_r, new_c, (0,255,0))
+
+
+        # walls=grid_walls[row][col]
+
+        # for i in range (len(walls)):
+        #     if(walls[i]==1):
+        #         draw_wall(row,col,i)
+
+        pygame.display.update()
+        return(new_r,new_c)
+        
+    else:
+        print(row,col)
+        # if (len(stack)>0):
+        #     color_cell(stack[-1][0],stack[-1][1],BACKGROUND_COLOR)
+        #     color_cell(stack[-1][0], stack[-1][1], (0,255,0))
+        # color_cell(row,col,BACKGROUND_COLOR)
+        
         walls=grid_walls[row][col]
 
         for i in range (len(walls)):
             if(walls[i]==1):
                 draw_wall(row,col,i)
 
-        pygame.display.update()
-        return(new_r,new_c)
-        
-    else:
         if(check_all_visited()):
             return None
         stack.pop()
@@ -165,7 +202,7 @@ prova=False
 run  = True
 while run:
 
-    if(coo is not None):
+    if(coo is not None and selected==-1):
         coo=gen_maze(coo[0],coo[1])
         print(coo)
     for event in pygame.event.get():
