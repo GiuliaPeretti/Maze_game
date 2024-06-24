@@ -1,14 +1,15 @@
 import pygame
 from settings import *
 import random 
+import time
 
 def draw_background():
     screen.fill(BACKGROUND_COLOR)
 
 def draw_grid(cell_width):
     for i in range (20,581,cell_width):
-        pygame.draw.line(screen, BLACK, (i,20),(i,580), 3)
-        pygame.draw.line(screen, BLACK, (20,i),(580,i), 3)
+        pygame.draw.line(screen, GRID_COLOR, (i,20),(i,580), 3)
+        pygame.draw.line(screen, GRID_COLOR, (20,i),(580,i), 3)
 
 def gen_buttons():
     x,y,w,h=640,20,100,30
@@ -39,12 +40,12 @@ def select_level(l):
     screen.blit(text, (buttons[l]['coordinates'][0]+17,buttons[l]['coordinates'][1]+5))
 
 def color_cell(row,col,color):
-    x,y,w,h=row*cell_width+20, col*cell_width+20, cell_width,cell_width
+    x,y,w,h=col*cell_width+20, row*cell_width+20, cell_width,cell_width
     pygame.draw.rect(screen, color, (x,y,w,h))
-    pygame.draw.line(screen, BLACK, (x,y),(x+cell_width,y), 3)
-    pygame.draw.line(screen, BLACK, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
-    pygame.draw.line(screen, BLACK, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
-    pygame.draw.line(screen, BLACK, (x,y),(x,y+cell_width), 3)
+    pygame.draw.line(screen, GRID_COLOR, (x,y),(x+cell_width,y), 3)
+    pygame.draw.line(screen, GRID_COLOR, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
+    pygame.draw.line(screen, GRID_COLOR, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
+    pygame.draw.line(screen, GRID_COLOR, (x,y),(x,y+cell_width), 3)
 
 def init_grids():
     size=int(560/cell_width)
@@ -73,19 +74,20 @@ def display_visited(row, col):
 
 def draw_wall(row,col,n):
     #0->up, 1->right, 2->down, 3->left
-    x,y,w,h=row*cell_width+20, col*cell_width+20, cell_width,cell_width
+    x,y,w,h=col*cell_width+20, row*cell_width+20, cell_width,cell_width
     match n:
         case 0:
-            pygame.draw.line(screen, PINK, (x,y),(x+cell_width,y), 3)
+            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x+cell_width,y), 3)
         case 1:
-            pygame.draw.line(screen, PINK, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
+            pygame.draw.line(screen, BACKGROUND_COLOR, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
         case 2:
-            pygame.draw.line(screen, PINK, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
+            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
         case 3:
-            pygame.draw.line(screen, PINK, (x,y),(x,y+cell_width), 3)
+            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
 
 def gen_maze(row,col):
-    print(row,col)
+
+    time.sleep(0.1)
     display_visited(row,col)
     valid_cell=[]
     if(row-1!=-1 and gird_visited[row-1][col]==0):
@@ -100,12 +102,13 @@ def gen_maze(row,col):
 
     
     if (len(valid_cell)>0):
+        stack.append((row,col))
         n=random.choice(valid_cell)
         new_r,new_c,wall=n
-        print(n)
+
         gird_visited[row][col]=1
         grid_walls[row][col][wall]=1
-        print(grid_walls[row][col])
+
         match wall:
             case 0:
                 grid_walls[new_r][new_c][2]=1
@@ -115,21 +118,30 @@ def gen_maze(row,col):
                 grid_walls[new_r][new_c][0]=1
             case 3:
                 grid_walls[new_r][new_c][1]=1
-        print("grid wall:" +str(grid_walls[row][col]))
-        print("poi grid wall:" +str(grid_walls[new_r][new_c]))
-        color_cell(row,col,WHITE)
-        color_cell(new_r, new_c, GRAY)
+
+        color_cell(row,col,BACKGROUND_COLOR)
+        color_cell(new_r, new_c, (0,255,0))
         walls=grid_walls[row][col]
+
         for i in range (len(walls)):
             if(walls[i]==1):
                 draw_wall(row,col,i)
+
         pygame.display.update()
-        b=gen_maze(new_r,new_c)
+        return(new_r,new_c)
         
     else:
-        return False
+        if(check_all_visited()):
+            return None
+        stack.pop()
+        return(stack[-1])
 
-
+def check_all_visited():
+    for r in gird_visited:
+        for c in r:
+            if c==0:
+                return False
+    return(True)
 
 
 
@@ -146,14 +158,16 @@ draw_grid(40)
 buttons=gen_buttons()
 draw_buttons()
 gird_visited, grid_walls=init_grids()
+coo=(0,0)
+stack=[]
 selected=-1
 prova=False
 run  = True
 while run:
-    if prova==False:
-        prova=True
-        print("start gen")
-        gen_maze(0,0)
+
+    if(coo is not None):
+        coo=gen_maze(coo[0],coo[1])
+        print(coo)
     for event in pygame.event.get():
         if (event.type == pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE)):
             run = False
