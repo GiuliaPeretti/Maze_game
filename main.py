@@ -3,8 +3,6 @@ from settings import *
 import random 
 import time
 
-# random.seed(1)
-
 def draw_background():
     screen.fill(BACKGROUND_COLOR)
 
@@ -114,20 +112,11 @@ def draw_wall(row,col,n,wall_color=BACKGROUND_COLOR):
             pygame.draw.line(screen, wall_color, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
         case 3:
             pygame.draw.line(screen, wall_color, (x,y),(x,y+cell_width), 3)
+    if(row==0 and col==0):
+        pygame.draw.line(screen, RED, (20,20),(20+cell_width,20), 3)
+    elif(row==(560/cell_width)-1 and col==(560/cell_width)-1):
+        pygame.draw.line(screen, RED, ( (row*cell_width)+cell_width+20 , (col*cell_width)+20 ) , ((row*cell_width)+cell_width+20 , (col*cell_width)+cell_width+20), 3)
 
-def draw_walls(row, col):
-    walls=grid_walls[row][col]
-    x,y,w,h=col*cell_width+20, row*cell_width+20, cell_width,cell_width
-    for i in range (len(walls)):
-        match walls[i]:
-            case 0:
-                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x+cell_width,y), 3)
-            case 1:
-                pygame.draw.line(screen, BACKGROUND_COLOR, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
-            case 2:
-                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
-            case 3:
-                pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
 
 def vis_gen_maze(row,col, prev_row, prev_col):
     while (row is not None):
@@ -138,7 +127,6 @@ def vis_gen_maze(row,col, prev_row, prev_col):
             display_visited(prev_row,prev_col,BACKGROUND_COLOR)
         gird_visited[row][col]=1
 
-
         valid_cell=[]
         if(row-1!=-1 and gird_visited[row-1][col]==0):
             valid_cell.append([row-1,col,0])
@@ -164,16 +152,13 @@ def vis_gen_maze(row,col, prev_row, prev_col):
                 case 3:
                     grid_walls[new_r][new_c][1]=1
 
-            # return(new_r,new_c, row, col)
             prev_row=row
             prev_col=col
             row=new_r
             col=new_c
-            
         else:       
 
             if(check_all_visited()):
-                # return (None, None, None, None)
                 prev_row=None
                 prev_col=None
                 row=None
@@ -181,7 +166,6 @@ def vis_gen_maze(row,col, prev_row, prev_col):
             else:
                 temp=stack[-1]
                 stack.pop()
-                # return(temp[0],temp[1], row, col)
                 prev_row=row
                 prev_col=col
                 row=temp[0]
@@ -189,9 +173,8 @@ def vis_gen_maze(row,col, prev_row, prev_col):
         pygame.display.flip()
     return(None,None,None,None)
 
-def gen_maze(row,col, prev_row, prev_col, cell_width):
+def gen_maze(row, col, cell_width):
     while (row is not None):
-        print(row,col, prev_row, prev_col)
 
         gird_visited[row][col]=1
 
@@ -221,26 +204,17 @@ def gen_maze(row,col, prev_row, prev_col, cell_width):
                 case 3:
                     grid_walls[new_r][new_c][1]=1
 
-            # return(new_r,new_c, row, col)
-            prev_row=row
-            prev_col=col
             row=new_r
             col=new_c
             
         else:       
 
             if(check_all_visited()):
-                # return (None, None, None, None)
-                prev_row=None
-                prev_col=None
                 row=None
                 col=None
             else:
                 temp=stack[-1]
                 stack.pop()
-                # return(temp[0],temp[1], row, col)
-                prev_row=row
-                prev_col=col
                 row=temp[0]
                 col=temp[1]
         pygame.display.flip()
@@ -315,11 +289,12 @@ def move_player(dir, cell_width):
             display_text("Victory")
 
 def display_text(text):
-    print("vinto")
+    print(text)
     pygame.draw.rect(screen, BACKGROUND_COLOR, (600,500,300,100))
-    font = pygame.font.SysFont('arial', 40)
+    font = pygame.font.SysFont('arial', 25)
     text=font.render(text, True, PINK)
     screen.blit(text, (630,540))
+    pygame.display.update()
 
 
 
@@ -355,43 +330,36 @@ while run:
             run = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             x,y=pygame.mouse.get_pos()
+            display_text("")
             for i in range (len(buttons)):
-                print("Entra nel for")
                 if(x>=buttons[i]['coordinates'][0] and x<=buttons[i]['coordinates'][0]+buttons[i]['coordinates'][2] and y>=buttons[i]['coordinates'][1] and y<=buttons[i]['coordinates'][1]+buttons[i]['coordinates'][3]):
-                    print("trova bottone"+str(i))
                     if(i<len(buttons)-2):
-                        print("level ",str(i))
                         selected=i
                         break
                     elif(i==5):
-                        print("generate")
                         stack=[]
                         stack_player=[(0,0)]
-                        print(selected)
                         generated=True
                         if(selected!=-1):
                             display_text("Generating")
-                            print("entra1")
                             gird_visited, grid_walls, cell_width=init_grids(selected, cell_width)
                             draw_grid(cell_width)
+                            display_text("Generating")
                             print(cell_width)
-                            gen_maze(0,0,None,None,cell_width)
+                            gen_maze(0,0,cell_width)
                             display_maze()
                             display_visited(0,0,GREEN)
                             display_text("")
                         else:
-                            print("seleziona livello")
+                            display_text("Select level")
                     else:
                         stack=[]
-                        print("watch")
-                        print(selected)
                         if(selected!=-1):
-                            print("entra1")
                             gird_visited, grid_walls, cell_width=init_grids(selected, cell_width)
                             draw_grid(cell_width)
                             vis_gen_maze(0,0,None,None)
                         else:
-                            print("seleziona livello")
+                            display_text("Select level")
                         # else:
                         #     print("fine")
                         #     draw_background()
