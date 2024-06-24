@@ -317,7 +317,6 @@ prova=False
 gird_visited, grid_walls=[],[]
 generated=False
 draw_background()
-draw_grid(cell_width)
 buttons=gen_buttons()
 draw_buttons()
 
