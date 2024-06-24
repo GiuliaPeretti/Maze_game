@@ -49,8 +49,19 @@ def color_cell(row,col,color):
 def init_grids():
     size=int(560/cell_width)
     print(size)
-    gird_visited= [[0] * size for i in range(size)]
-    grid_walls= [[[0,0,0,0]] * size for i in range(size)]
+    gird_visited=[]
+    for i in range (size):
+        t=[]
+        for j in range (size):
+            t.append(0)
+        gird_visited.append(t)
+    grid_walls= []
+    for i in range (size):
+        t=[]
+        for j in range (size):
+            t.append([0,0,0,0])
+        grid_walls.append(t)
+
     return(gird_visited, grid_walls)
 
 def display_visited(row, col):
@@ -82,24 +93,39 @@ def gen_maze(row,col):
     if(col-1!=-1 and gird_visited[row][col-1]==0):
         valid_cell.append([row,col-1,3])
     if(row+1!=len(gird_visited) and gird_visited[row+1][col]==0):
-        valid_cell.append([row+1,col,1])
+        valid_cell.append([row+1,col,2])
     if(col+1!=len(gird_visited) and gird_visited[row][col+1]==0):
-        valid_cell.append([row,col+1,2])
+        valid_cell.append([row,col+1,1])
     
 
     
     if (len(valid_cell)>0):
         n=random.choice(valid_cell)
         new_r,new_c,wall=n
+        print(n)
         gird_visited[row][col]=1
         grid_walls[row][col][wall]=1
+        print(grid_walls[row][col])
+        match wall:
+            case 0:
+                grid_walls[new_r][new_c][2]=1
+            case 1:
+                grid_walls[new_r][new_c][3]=1
+            case 2:
+                grid_walls[new_r][new_c][0]=1
+            case 3:
+                grid_walls[new_r][new_c][1]=1
+        print("grid wall:" +str(grid_walls[row][col]))
+        print("poi grid wall:" +str(grid_walls[new_r][new_c]))
+        color_cell(row,col,WHITE)
+        color_cell(new_r, new_c, GRAY)
         walls=grid_walls[row][col]
         for i in range (len(walls)):
             if(walls[i]==1):
                 draw_wall(row,col,i)
-        
-        gen_maze(new_r,new_c)
         pygame.display.update()
+        b=gen_maze(new_r,new_c)
+        
     else:
         return False
 
@@ -124,6 +150,10 @@ selected=-1
 prova=False
 run  = True
 while run:
+    if prova==False:
+        prova=True
+        print("start gen")
+        gen_maze(0,0)
     for event in pygame.event.get():
         if (event.type == pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE)):
             run = False
@@ -144,10 +174,7 @@ while run:
             #         if(selected_cell[0]!=-1 and (grid[selected_cell[0]][selected_cell[1]]==0 or grid_bold[selected_cell[0]][selected_cell[1]]==0)):
             #             draw_number(selected_cell[0],selected_cell[1], i+1)
                     
-    if prova==False:
-        prova=True
-        print("start gen")
-        gen_maze(0,0)
+
     pygame.display.flip()
     clock.tick(30)
     
