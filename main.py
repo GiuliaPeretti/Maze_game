@@ -20,20 +20,34 @@ def gen_buttons():
         buttons.append({'name': 'Level '+str(i), 'coordinates': (x,y,w,h)})
         y=y+h+10
     buttons.append({'name': 'Generate', 'coordinates': (x,y,w,h)})
+    y=y+h+10
+    buttons.append({'name': 'Watch', 'coordinates': (x,y,w,h)})
 
     return(buttons)
 
 def draw_buttons():
+    
     for b in buttons[:len(buttons)-1]:
         pygame.draw.rect(screen, GRAY, b['coordinates'])
         pygame.draw.rect(screen, BLACK, b['coordinates'], 3)
         text=font.render(b['name'], True, BLACK)
         screen.blit(text, (b['coordinates'][0]+17,b['coordinates'][1]+5))
+    
+    if selected!=-1:
+        pygame.draw.rect(screen, PINK, buttons[selected]['coordinates'])
+        pygame.draw.rect(screen, BLACK, buttons[selected]['coordinates'], 3)
+        text=font.render(buttons[selected]['name'], True, BLACK)
+        screen.blit(text, (buttons[selected]['coordinates'][0]+17,buttons[selected]['coordinates'][1]+5))
+
+    pygame.draw.rect(screen, GRAY, buttons[-2]['coordinates'])
+    pygame.draw.rect(screen, BLACK,  buttons[-2]['coordinates'], 3)
+    text=font.render( buttons[-2]['name'], True, BLACK)
+    screen.blit(text, ( buttons[-2]['coordinates'][0]+8, buttons[-2]['coordinates'][1]+5))
 
     pygame.draw.rect(screen, GRAY, buttons[-1]['coordinates'])
     pygame.draw.rect(screen, BLACK,  buttons[-1]['coordinates'], 3)
     text=font.render( buttons[-1]['name'], True, BLACK)
-    screen.blit(text, ( buttons[-1]['coordinates'][0]+8, buttons[-1]['coordinates'][1]+5))
+    screen.blit(text, ( buttons[-1]['coordinates'][0]+22, buttons[-1]['coordinates'][1]+5))
 
 def select_level(l):
     pygame.draw.rect(screen, PINK, buttons[l]['coordinates'])
@@ -101,11 +115,64 @@ def draw_walls(row, col):
             case 3:
                 pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
 
-def gen_maze(row,col, prev_row, prev_col):
+def vis_gen_maze(row,col, prev_row, prev_col):
+    while (row is not None):
+        display_visited(row,col,(0,255,0))
+        if(prev_row is not None):
+            display_visited(prev_row,prev_col,BACKGROUND_COLOR)
+        gird_visited[row][col]=1
 
-    # display_visited(row,col,(0,255,0))
-    # if(prev_row is not None):
-    #     display_visited(prev_row,prev_col,BACKGROUND_COLOR)
+
+        valid_cell=[]
+        if(row-1!=-1 and gird_visited[row-1][col]==0):
+            valid_cell.append([row-1,col,0])
+        if(col-1!=-1 and gird_visited[row][col-1]==0):
+            valid_cell.append([row,col-1,3])
+        if(row+1!=len(gird_visited) and gird_visited[row+1][col]==0):
+            valid_cell.append([row+1,col,2])
+        if(col+1!=len(gird_visited) and gird_visited[row][col+1]==0):
+            valid_cell.append([row,col+1,1])
+        if (len(valid_cell)>0):
+            stack.append((row,col))
+            n=random.choice(valid_cell)
+            new_r,new_c,wall=n
+            gird_visited[row][col]=1
+            grid_walls[row][col][wall]=1
+            match wall:
+                case 0:
+                    grid_walls[new_r][new_c][2]=1
+                case 1:
+                    grid_walls[new_r][new_c][3]=1
+                case 2:
+                    grid_walls[new_r][new_c][0]=1
+                case 3:
+                    grid_walls[new_r][new_c][1]=1
+
+            # return(new_r,new_c, row, col)
+            prev_row=row
+            prev_col=col
+            row=new_r
+            col=new_c
+            
+        else:       
+
+            if(check_all_visited()):
+                # return (None, None, None, None)
+                prev_row=None
+                prev_col=None
+                row=None
+                col=None
+            temp=stack[-1]
+            stack.pop()
+            # return(temp[0],temp[1], row, col)
+            prev_row=row
+            prev_col=col
+            row=temp[0]
+            col=temp[1]
+        pygame.display.flip()
+    return(None)
+
+def gen_maze(row,col, prev_row, prev_col):
     gird_visited[row][col]=1
 
 
@@ -138,13 +205,7 @@ def gen_maze(row,col, prev_row, prev_col):
 
         return(new_r,new_c, row, col)
         
-    else:        
-        # display_visited(row,col,BACKGROUND_COLOR)
-        # walls=grid_walls[row][col]
-
-        # for i in range (len(walls)):
-        #     if(walls[i]==1):
-        #         draw_wall(row,col,i)
+    else:      
 
         if(check_all_visited()):
             return (None, None, None, None)
@@ -169,44 +230,63 @@ def display_maze():
                 if walls[i]==1:
                     draw_wall(r,c,i)
 
+def select_watch():
+    pygame.draw.rect(screen, PINK, buttons[6]['coordinates'])
+    pygame.draw.rect(screen, BLACK, buttons[6]['coordinates'], 3)
+    text=font.render(buttons[6]['name'], True, BLACK)
+    screen.blit(text, (buttons[6]['coordinates'][0]+22,buttons[6]['coordinates'][1]+5))
+
+
 pygame.init()
 clock=pygame.time.Clock()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), flags, vsync=1)
 pygame.display.set_caption('Maze♥')
 font = pygame.font.SysFont('arial', 20)
 
-draw_background()
+
 cell_width=40
+r1,c1,r2,c2=0,0,None,None
+stack=[]
+selected=-1
+selected_watch=False
+prova=False
+draw_background()
 draw_grid(cell_width)
 buttons=gen_buttons()
 draw_buttons()
 gird_visited, grid_walls=init_grids()
-r1,c1,r2,c2=0,0,None,None
-stack=[]
-selected=-1
-prova=False
+
 run  = True
 while run:
-    if(r1 is not None and selected==-1):
-        r1,c1,r2,c2=gen_maze(r1,c1,r2,c2)
-        print(r1,c1)
-    else:
-        print("fine")
-        draw_background()
-        display_maze()
+
     for event in pygame.event.get():
         if (event.type == pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE)):
             run = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             x,y=pygame.mouse.get_pos()
             for i in range (len(buttons)):
+                print("Entra nel for")
                 if(x>=buttons[i]['coordinates'][0] and x<=buttons[i]['coordinates'][0]+buttons[i]['coordinates'][2] and y>=buttons[i]['coordinates'][1] and y<=buttons[i]['coordinates'][1]+buttons[i]['coordinates'][3]):
-                    selected=i
-                    select_level(i)
-                    break
-                else:
-                    selected=-1
-                    draw_buttons()
+                    print("trova bottone"+str(i))
+                    if(i<len(buttons)-2):
+                        print("level ",str(i))
+                        selected=i
+                        break
+                    elif(i==5):
+                        print("generate")
+                    else:
+                        print("watch")
+                        print(selected)
+                        if(r1 is not None and selected==-1):
+                            r1,c1,r2,c2=vis_gen_maze(r1,c1,r2,c2)
+                            print(r1,c1)
+                        # else:
+                        #     print("fine")
+                        #     draw_background()
+                        #     display_maze()
+            else:
+                selected=-1
+            draw_buttons()              
         if (event.type == pygame.KEYDOWN):
             pass
             # for i in range(len(INPUTS)):
