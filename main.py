@@ -95,25 +95,25 @@ def init_grids(l, cell_width):
 
     return(gird_visited, grid_walls, cell_width)
 
-def display_visited(row, col, color):
-    color_cell(row, col, color)
+def display_visited(row, col, cell_color, wall_color=BACKGROUND_COLOR):
+    color_cell(row, col, cell_color)
     walls=grid_walls[row][col]
     for i in range (len(walls)):
         if(walls[i]==1):
-            draw_wall(row,col,i)
+            draw_wall(row,col,i,wall_color)
 
-def draw_wall(row,col,n):
+def draw_wall(row,col,n,wall_color=BACKGROUND_COLOR):
     #0->up, 1->right, 2->down, 3->left
     x,y,w,h=col*cell_width+20, row*cell_width+20, cell_width,cell_width
     match n:
         case 0:
-            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x+cell_width,y), 3)
+            pygame.draw.line(screen, wall_color, (x,y),(x+cell_width,y), 3)
         case 1:
-            pygame.draw.line(screen, BACKGROUND_COLOR, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
+            pygame.draw.line(screen, wall_color, (x+cell_width,y),(x+cell_width,y+cell_width), 3)
         case 2:
-            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
+            pygame.draw.line(screen, wall_color, (x,y+cell_width),(x+cell_width,y+cell_width), 3)
         case 3:
-            pygame.draw.line(screen, BACKGROUND_COLOR, (x,y),(x,y+cell_width), 3)
+            pygame.draw.line(screen, wall_color, (x,y),(x,y+cell_width), 3)
 
 def draw_walls(row, col):
     walls=grid_walls[row][col]
@@ -251,6 +251,8 @@ def gen_maze(row,col, prev_row, prev_col, cell_width):
         grid_walls[i][0][3]=0
         grid_walls[size-1][i][2]=0
         grid_walls[i][size-1][1]=0
+    grid_walls[0][0][0]=1
+    grid_walls[size-1][size-1][1]=1
     return(None,None,None,None)
 
 def check_all_visited():
@@ -278,22 +280,20 @@ def select_watch():
     text=font.render(buttons[6]['name'], True, BLACK)
     screen.blit(text, (buttons[6]['coordinates'][0]+22,buttons[6]['coordinates'][1]+5))
 
-def move_player(dir):
-    print(stack_player)
+def move_player(dir, cell_width):
+    size=560/cell_width
     player_cell=stack_player[-1]
     valid=False
-    print(grid_walls[player_cell[0]][player_cell[1]])
 
     print(grid_walls[player_cell[0]][player_cell[1]][0])
     print(grid_walls[player_cell[0]][player_cell[1]][1])
     print(grid_walls[player_cell[0]][player_cell[1]][2])
     print(grid_walls[player_cell[0]][player_cell[1]][3])
 
-    print(dir)
-    if dir==0 and grid_walls[player_cell[0]][player_cell[1]][0]==1:
+    if dir==0 and grid_walls[player_cell[0]][player_cell[1]][0]==1 and player_cell[0]-1>=0:
         player_cell=(player_cell[0]-1, player_cell[1])
         valid=True
-    elif dir==1 and grid_walls[player_cell[0]][player_cell[1]][1]==1:
+    elif dir==1 and grid_walls[player_cell[0]][player_cell[1]][1]==1 and player_cell[1]+1<size:
         player_cell=(player_cell[0], player_cell[1]+1)
         valid=True
     elif dir==2  and grid_walls[player_cell[0]][player_cell[1]][2]==1:
@@ -304,10 +304,24 @@ def move_player(dir):
         valid=True
     if valid:
         if (len(stack_player)>0):
-            print("entra")
-            display_visited(player_cell[0],player_cell[1], BACKGROUND_COLOR)
-        display_visited(player_cell[0],player_cell[1],GREEN)
-        stack_player.append(player_cell)
+            if(len(stack_player)>1 and stack_player[-2][0]==player_cell[0]  and stack_player[-2][1]==player_cell[1]):
+                display_visited(stack_player[-1][0],stack_player[-1][1], BACKGROUND_COLOR)
+                stack_player.pop()
+            else:
+                display_visited(stack_player[-1][0],stack_player[-1][1],  DARK_GREEN, DARK_GREEN)
+                stack_player.append(player_cell)
+        display_visited(player_cell[0],player_cell[1],GREEN,GREEN)      
+        if(player_cell==(size-1,size-1)):
+            display_text("Victory")
+
+def display_text(text):
+    print("vinto")
+    pygame.draw.rect(screen, BACKGROUND_COLOR, (600,500,300,100))
+    font = pygame.font.SysFont('arial', 40)
+    text=font.render(text, True, PINK)
+    screen.blit(text, (630,540))
+
+
 
 
 
@@ -351,9 +365,12 @@ while run:
                         break
                     elif(i==5):
                         print("generate")
+                        stack=[]
+                        stack_player=[(0,0)]
                         print(selected)
                         generated=True
                         if(selected!=-1):
+                            display_text("Generating")
                             print("entra1")
                             gird_visited, grid_walls, cell_width=init_grids(selected, cell_width)
                             draw_grid(cell_width)
@@ -361,9 +378,11 @@ while run:
                             gen_maze(0,0,None,None,cell_width)
                             display_maze()
                             display_visited(0,0,GREEN)
+                            display_text("")
                         else:
                             print("seleziona livello")
                     else:
+                        stack=[]
                         print("watch")
                         print(selected)
                         if(selected!=-1):
@@ -383,7 +402,7 @@ while run:
         if (event.type == pygame.KEYDOWN):
             for i in range(len(INPUTS)):
                 if (event.key==INPUTS[i] and generated==True):
-                    move_player(i)
+                    move_player(i, cell_width)
                         
                     
 
