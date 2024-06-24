@@ -271,6 +271,26 @@ def select_watch():
     text=font.render(buttons[6]['name'], True, BLACK)
     screen.blit(text, (buttons[6]['coordinates'][0]+22,buttons[6]['coordinates'][1]+5))
 
+def move_player(dir):
+    print(stack_player)
+    player_cell=stack_player[-1]
+    if (len(stack_player)>0):
+        print("entra")
+        display_visited(player_cell[0],player_cell[1], BACKGROUND_COLOR)
+    
+    if dir==0:
+        player_cell=(player_cell[0]-1, player_cell[1])
+    elif dir==1:
+        player_cell=(player_cell[0], player_cell[1]+1)
+    elif dir==2:
+        player_cell=(player_cell[0]+1, player_cell[1])
+    elif dir==3:
+        player_cell=(player_cell[0], player_cell[1]-1)
+    display_visited(player_cell[0],player_cell[1],GREEN)
+    stack_player.append(player_cell)
+    print(stack_player[-2])
+
+
 
 pygame.init()
 clock=pygame.time.Clock()
@@ -282,10 +302,12 @@ font = pygame.font.SysFont('arial', 20)
 cell_width=70
 r1,c1,r2,c2=0,0,None,None
 stack=[]
+stack_player=[(0,0)]
 selected=-1
 selected_watch=False
 prova=False
 gird_visited, grid_walls=[],[]
+generated=False
 draw_background()
 draw_grid(cell_width)
 buttons=gen_buttons()
@@ -311,12 +333,14 @@ while run:
                     elif(i==5):
                         print("generate")
                         print(selected)
+                        generated=True
                         if(selected!=-1):
                             print("entra1")
                             gird_visited, grid_walls, cell_width=init_grids(selected, cell_width)
                             draw_grid(cell_width)
                             gen_maze(0,0,None,None)
                             display_maze()
+                            display_visited(0,0,GREEN)
                         else:
                             print("seleziona livello")
                     else:
@@ -337,11 +361,10 @@ while run:
                 selected=-1
             draw_buttons()              
         if (event.type == pygame.KEYDOWN):
-            pass
-            # for i in range(len(INPUTS)):
-            #     if (event.key==INPUTS[i]):
-            #         if(selected_cell[0]!=-1 and (grid[selected_cell[0]][selected_cell[1]]==0 or grid_bold[selected_cell[0]][selected_cell[1]]==0)):
-            #             draw_number(selected_cell[0],selected_cell[1], i+1)
+            for i in range(len(INPUTS)):
+                if (event.key==INPUTS[i] and generated==True):
+                    move_player(i)
+                        
                     
 
     pygame.display.flip()
